@@ -1,0 +1,2 @@
+服务器启用之后需要启用数据库，命令 mongod --dbpath mongodb文件地址/data(data是默认路径)
+mongod --dbpath /usr/local/mongodb/data
