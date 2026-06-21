@@ -1,4 +1,4 @@
-import { Controller, Get, Param, Req, Res } from '@nestjs/common';
+import { Controller, Get, Post, Param, Req, Res } from '@nestjs/common';
 import { Request, Response } from 'express';
 import { OrderService } from './order.service';
 import { verifyTokenFromRequest } from '../../common/utils/token.util';
@@ -94,5 +94,35 @@ export class OrderController {
     }
     const result = await this.orderService.findCityData(cityId);
     return res.send(result);
+  }
+
+  @Post('create')
+  async create(@Req() req: Request, @Res() res: Response) {
+    const user = verifyTokenFromRequest(req);
+    if (!user) {
+      return res.status(201).send({ code: 500001, data: {}, msg: 'token 失效或未登录' });
+    }
+    const result = await this.orderService.createOrder(req.body);
+    return res.send(result);
+  }
+
+  @Post('edit')
+  async edit(@Req() req: Request, @Res() res: Response) {
+    const user = verifyTokenFromRequest(req);
+    if (!user) {
+      return res.status(201).send({ code: 500001, data: {}, msg: 'token 失效或未登录' });
+    }
+    const result = await this.orderService.editOrder(req.body);
+    return res.send(result);
+  }
+
+  @Post('delete')
+  async delete(@Req() req: Request, @Res() res: Response) {
+    const user = verifyTokenFromRequest(req);
+    if (!user) {
+      return res.status(201).send({ code: 500001, data: {}, msg: 'token 失效或未登录' });
+    }
+    const result = await this.orderService.deleteOrder(req.body.id);
+    return res.json(result);
   }
 }

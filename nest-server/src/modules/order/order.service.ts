@@ -70,4 +70,32 @@ export class OrderService {
     const city = await this.cityDataModel.findOne({ cityId }).lean().exec();
     return { code: 0, data: (city as any)?.points ?? null };
   }
+
+  async createOrder(body: any) {
+    const newOrder = {
+      _id: Date.now().toString(),
+      orderId: `T${Date.now().toString()}`,
+      ...body,
+      createTime: new Date().toISOString(),
+    };
+    await this.orderModel.create(newOrder as any);
+    return { code: 0, msg: '创建订单成功', data: newOrder };
+  }
+
+  async editOrder(body: any) {
+    const { orderId, route: newRouter } = body;
+    if (!orderId || !Array.isArray(newRouter)) {
+      return { msg: '参数不合法' };
+    }
+    const list = await this.orderModel.findOneAndUpdate(
+      { orderId },
+      { $set: { route: newRouter } },
+    );
+    return { code: 0, msg: '更新成功', data: list };
+  }
+
+  async deleteOrder(id: string) {
+    await this.orderModel.deleteOne({ orderId: id });
+    return { msg: '删除成功', code: 0, data: {} };
+  }
 }
