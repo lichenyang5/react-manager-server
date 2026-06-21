@@ -24,4 +24,19 @@ export class UsersController {
     }
     return res.send({ code: 0, msg: '', data });
   }
+
+  @Get('getPermissionList')
+  async getPermissionList(@Req() req: Request, @Res() res: Response) {
+    const user = verifyTokenFromRequest(req);
+    if (!user) {
+      return res.status(201).send({
+        code: 500001,
+        data: {},
+        msg: 'token 失效或未登录',
+      });
+    }
+
+    const data = await this.usersService.getPermissionList();
+    return res.send({ meg: '', code: 0, data });
+  }
 }
