@@ -7,6 +7,7 @@ import { AuthModule } from './modules/auth/auth.module';
 import { DeptModule } from './modules/dept/dept.module';
 import { MenuModule } from './modules/menu/menu.module';
 import { RolesModule } from './modules/roles/roles.module';
+import { OrderModule } from './modules/order/order.module';
 
 const MONGODB_URI =
   process.env.MONGODB_URI || 'mongodb://127.0.0.1/MyManager';
@@ -19,6 +20,7 @@ const MONGODB_URI =
     DeptModule,
     MenuModule,
     RolesModule,
+    OrderModule,
   ],
   controllers: [AppController],
   providers: [AppService],
