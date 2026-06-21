@@ -1,4 +1,4 @@
-import { Controller, Get, Req, Res } from '@nestjs/common';
+import { Controller, Get, Param, Req, Res } from '@nestjs/common';
 import { Request, Response } from 'express';
 import { OrderService } from './order.service';
 import { verifyTokenFromRequest } from '../../common/utils/token.util';
@@ -74,5 +74,25 @@ export class OrderController {
       accountStatus,
     });
     return res.send({ code: 0, data, msg: '' });
+  }
+
+  @Get('detail/:orderId')
+  async detail(@Param('orderId') orderId: string, @Req() req: Request, @Res() res: Response) {
+    const user = verifyTokenFromRequest(req);
+    if (!user) {
+      return res.status(201).send({ code: 500001, data: {}, msg: 'token 失效或未登录' });
+    }
+    const result = await this.orderService.findOrderDetail(orderId);
+    return res.send(result);
+  }
+
+  @Get('cityData/:cityId')
+  async cityData(@Param('cityId') cityId: string, @Req() req: Request, @Res() res: Response) {
+    const user = verifyTokenFromRequest(req);
+    if (!user) {
+      return res.status(201).send({ code: 500001, data: {}, msg: 'token 失效或未登录' });
+    }
+    const result = await this.orderService.findCityData(cityId);
+    return res.send(result);
   }
 }

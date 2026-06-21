@@ -5,6 +5,7 @@ import { Order, OrderDocument } from './schemas/order.schema';
 import { City, CityDocument } from './schemas/city.schema';
 import { Vehicle, VehicleDocument } from './schemas/vehicle.schema';
 import { Driver, DriverDocument } from './schemas/driver.schema';
+import { CityData, CityDataDocument } from './schemas/city-data.schema';
 
 @Injectable()
 export class OrderService {
@@ -13,6 +14,7 @@ export class OrderService {
     @InjectModel(City.name) private cityModel: Model<CityDocument>,
     @InjectModel(Vehicle.name) private vehicleModel: Model<VehicleDocument>,
     @InjectModel(Driver.name) private driverModel: Model<DriverDocument>,
+    @InjectModel(CityData.name) private cityDataModel: Model<CityDataDocument>,
   ) {}
 
   async findOrderList(query: {
@@ -54,5 +56,18 @@ export class OrderService {
 
     const list = await this.driverModel.find(filter).lean().exec();
     return { list };
+  }
+
+  async findOrderDetail(orderId: string) {
+    const order = await this.orderModel.findOne({ orderId }).lean().exec();
+    if (order) {
+      return { code: 0, msg: '', data: order };
+    }
+    return { code: 1, msg: '订单不存在', data: {} };
+  }
+
+  async findCityData(cityId: string) {
+    const city = await this.cityDataModel.findOne({ cityId }).lean().exec();
+    return { code: 0, data: (city as any)?.points ?? null };
   }
 }

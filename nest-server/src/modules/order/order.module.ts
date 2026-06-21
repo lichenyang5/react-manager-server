@@ -4,6 +4,7 @@ import { Order, OrderSchema } from './schemas/order.schema';
 import { City, CitySchema } from './schemas/city.schema';
 import { Vehicle, VehicleSchema } from './schemas/vehicle.schema';
 import { Driver, DriverSchema } from './schemas/driver.schema';
+import { CityData, CityDataSchema } from './schemas/city-data.schema';
 import { OrderController } from './order.controller';
 import { OrderService } from './order.service';
 
@@ -14,6 +15,7 @@ import { OrderService } from './order.service';
       { name: City.name, schema: CitySchema },
       { name: Vehicle.name, schema: VehicleSchema },
       { name: Driver.name, schema: DriverSchema },
+      { name: CityData.name, schema: CityDataSchema },
     ]),
   ],
   controllers: [OrderController],
