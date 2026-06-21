@@ -1,5 +1,6 @@
 import { Controller, Get, Post, Param, Req, Res } from '@nestjs/common';
 import { Request, Response } from 'express';
+import * as ExcelJS from 'exceljs';
 import { OrderService } from './order.service';
 import { verifyTokenFromRequest } from '../../common/utils/token.util';
 
@@ -124,5 +125,31 @@ export class OrderController {
     }
     const result = await this.orderService.deleteOrder(req.body.id);
     return res.json(result);
+  }
+
+  @Post('export')
+  async export(@Res() res: Response) {
+    const stateMap = { 1: '进行中', 2: '完成', 3: '超时', 4: '取消' };
+    const orders = await this.orderService.exportOrders();
+    const newData = orders.map((item: any) => ({
+      ...item,
+      state: stateMap[item.state] || item.state,
+    }));
+
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet('订单列表');
+    worksheet.columns = [
+      { header: '订单ID', key: 'orderId', width: 20 },
+      { header: '城市', key: 'cityName', width: 15 },
+      { header: '车型', key: 'vehicleName', width: 15 },
+      { header: '下单时间', key: 'createTime', width: 20 },
+      { header: '订单状态', key: 'state', width: 15 },
+    ];
+    worksheet.addRows(newData);
+
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('file-name', encodeURIComponent('订单列表.xlsx'));
+    await workbook.xlsx.write(res);
+    res.end();
   }
 }

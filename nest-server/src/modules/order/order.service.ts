@@ -98,4 +98,8 @@ export class OrderService {
     await this.orderModel.deleteOne({ orderId: id });
     return { msg: '删除成功', code: 0, data: {} };
   }
+
+  async exportOrders() {
+    return this.orderModel.find({}).lean().exec();
+  }
 }
