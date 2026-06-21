@@ -1,5 +1,8 @@
-import { Controller, Get, Post, Req, Res } from '@nestjs/common';
+import { Controller, Get, Post, Req, Res, UseInterceptors, UploadedFile } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { Request, Response } from 'express';
+import { diskStorage } from 'multer';
+import { extname } from 'path';
 import { UsersService } from './users.service';
 import { verifyTokenFromRequest } from '../../common/utils/token.util';
 
@@ -99,5 +102,24 @@ export class UsersController {
     }
     const result = await this.usersService.deleteUser(req.body.userId);
     return res.send(result);
+  }
+
+  @Post('upload')
+  @UseInterceptors(FileInterceptor('file', {
+    storage: diskStorage({
+      destination: './public/images',
+      filename: (_req, file, cb) => {
+        const ext = extname(file.originalname);
+        cb(null, Date.now() + ext);
+      },
+    }),
+  }))
+  async upload(@Req() req: Request, @Res() res: Response, @UploadedFile() file: Express.Multer.File) {
+    const user = verifyTokenFromRequest(req);
+    if (!user) {
+      return res.status(201).send({ code: 500001, data: {}, msg: 'token 失效或未登录' });
+    }
+    const fileUrl = `http://localhost:3001/images/${file.filename}`;
+    return res.send({ code: 0, msg: '上传成功', url: fileUrl });
   }
 }

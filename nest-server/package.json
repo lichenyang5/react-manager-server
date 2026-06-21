@@ -16,11 +16,13 @@
     "@types/jsonwebtoken": "^9.0.10",
     "jsonwebtoken": "^9.0.3",
     "mongoose": "^9.7.1",
+    "multer": "^2.2.0",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.2"
   },
   "devDependencies": {
     "@nestjs/cli": "^11.0.7",
+    "@types/multer": "^2.1.0",
     "typescript": "^5.8.3"
   }
 }
