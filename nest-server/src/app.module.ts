@@ -5,12 +5,21 @@ import { AppService } from './app.service';
 import { UsersModule } from './modules/users/users.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { DeptModule } from './modules/dept/dept.module';
+import { MenuModule } from './modules/menu/menu.module';
+import { RolesModule } from './modules/roles/roles.module';
 
 const MONGODB_URI =
   process.env.MONGODB_URI || 'mongodb://127.0.0.1/MyManager';
 
 @Module({
-  imports: [MongooseModule.forRoot(MONGODB_URI), UsersModule, AuthModule, DeptModule],
+  imports: [
+    MongooseModule.forRoot(MONGODB_URI),
+    UsersModule,
+    AuthModule,
+    DeptModule,
+    MenuModule,
+    RolesModule,
+  ],
   controllers: [AppController],
   providers: [AppService],
 })
