@@ -1,1 +1,3 @@
 node_modules
+docker/mongo/dump/*
+!docker/mongo/dump/.gitkeep
