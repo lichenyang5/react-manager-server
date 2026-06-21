@@ -77,4 +77,28 @@ export class UsersService {
       }
     });
   }
+
+  async createUser(body: any) {
+    const newUser = { userId: Date.now(), ...body };
+    const newData = await this.userModel.create(newUser);
+    return { code: 0, msg: '创建成功', data: newData };
+  }
+
+  async editUser(body: any) {
+    const { userId, ...updates } = body;
+    const updatedUser = await this.userModel.findOneAndUpdate(
+      { userId: Number(userId) },
+      { $set: updates },
+      { new: true },
+    );
+    if (!updatedUser) {
+      return { code: 1, msg: '用户不存在', data: {} };
+    }
+    return { code: 0, msg: '编辑成功', data: updatedUser };
+  }
+
+  async deleteUser(userId: number[]) {
+    await this.userModel.deleteMany({ userId: { $in: userId } });
+    return { code: 0, data: {}, msg: '删除成功' };
+  }
 }

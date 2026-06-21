@@ -1,4 +1,4 @@
-import { Controller, Get, Req, Res } from '@nestjs/common';
+import { Controller, Get, Post, Req, Res } from '@nestjs/common';
 import { Request, Response } from 'express';
 import { UsersService } from './users.service';
 import { verifyTokenFromRequest } from '../../common/utils/token.util';
@@ -69,5 +69,35 @@ export class UsersController {
 
     const data = await this.usersService.getPermissionList();
     return res.send({ meg: '', code: 0, data });
+  }
+
+  @Post('create')
+  async create(@Req() req: Request, @Res() res: Response) {
+    const user = verifyTokenFromRequest(req);
+    if (!user) {
+      return res.status(201).send({ code: 500001, data: {}, msg: 'token 失效或未登录' });
+    }
+    const result = await this.usersService.createUser(req.body);
+    return res.send(result);
+  }
+
+  @Post('edit')
+  async edit(@Req() req: Request, @Res() res: Response) {
+    const user = verifyTokenFromRequest(req);
+    if (!user) {
+      return res.status(201).send({ code: 500001, data: {}, msg: 'token 失效或未登录' });
+    }
+    const result = await this.usersService.editUser(req.body);
+    return res.send(result);
+  }
+
+  @Post('delete')
+  async delete(@Req() req: Request, @Res() res: Response) {
+    const user = verifyTokenFromRequest(req);
+    if (!user) {
+      return res.status(201).send({ code: 500001, data: {}, msg: 'token 失效或未登录' });
+    }
+    const result = await this.usersService.deleteUser(req.body.userId);
+    return res.send(result);
   }
 }
