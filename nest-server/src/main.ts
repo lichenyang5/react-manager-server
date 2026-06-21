@@ -8,7 +8,8 @@ async function bootstrap() {
   app.useStaticAssets(join(__dirname, '..', 'public', 'images'), {
     prefix: '/images/',
   });
-  await app.listen(3001);
-  console.log('NestJS 服务已启动: http://localhost:3001');
+  const port = process.env.PORT || 3001;
+  await app.listen(port, '0.0.0.0');
+  console.log(`NestJS 服务已启动: http://localhost:${port}`);
 }
 bootstrap();

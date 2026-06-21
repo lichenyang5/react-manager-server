@@ -8,5 +8,20 @@ services:
       - mongo-data:/data/db
     restart: unless-stopped
 
+  nest-api:
+    build:
+      context: ./nest-server
+      dockerfile: Dockerfile
+    container_name: react-manager-nest-api
+    ports:
+      - "3001:3001"
+    environment:
+      NODE_ENV: production
+      PORT: "3001"
+      MONGODB_URI: mongodb://mongo:27017/MyManager
+    depends_on:
+      - mongo
+    restart: unless-stopped
+
 volumes:
   mongo-data:

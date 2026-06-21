@@ -153,12 +153,64 @@ db.orderlists.countDocuments()
 | radardatas | 雷达图数据 |
 | citydatas | 城市坐标数据 |
 
+## NestJS Docker 化
+
+### 构建并启动
+
+```bash
+docker compose up -d --build mongo nest-api
+```
+
+### 查看容器状态
+
+```bash
+docker ps
+```
+
+应看到 `react-manager-mongo` 和 `react-manager-nest-api` 两个容器。
+
+### 查看 NestJS 日志
+
+```bash
+docker compose logs -f nest-api
+```
+
+### 连接配置
+
+| 场景 | MONGODB_URI |
+|------|-------------|
+| Docker 容器内（compose 服务互联） | `mongodb://mongo:27017/MyManager` |
+| 宿主机本地开发连 Docker MongoDB | `mongodb://127.0.0.1:27018/MyManager` |
+| 宿主机连本地原生 MongoDB | `mongodb://127.0.0.1:27017/MyManager` |
+
+### 验证
+
+```bash
+# 健康检查
+curl http://localhost:3001/health
+curl http://localhost:3001/health/db
+
+# 登录
+curl -X POST "http://localhost:3001/user/login" \
+  -H "Content-Type: application/json" \
+  -d '{"userName":"admin","userPwd":"111111"}'
+
+# 全量接口验收
+bash scripts/check-nest-api-contract.sh
+```
+
+### 本地开发（不用 Docker 运行 NestJS）
+
+如果只想用 Docker MongoDB，NestJS 本地运行：
+
+```bash
+cd nest-server
+MONGODB_URI=mongodb://127.0.0.1:27018/MyManager npm run start:dev
+```
+
 ## 后续步骤
 
-完成数据迁移后：
-
-1. 修改 NestJS 连接串指向 Docker MongoDB
-2. 运行 `bash scripts/check-nest-api-contract.sh` 确认接口正常
-3. 继续 Docker 化 NestJS 后端（添加 Dockerfile + compose service）
-4. Docker 化 React 前端（nginx + 静态文件）
-5. 最终 `docker compose up` 一键启动
+1. ~~Docker 化 MongoDB~~ ✓
+2. ~~Docker 化 NestJS 后端~~ ✓
+3. Docker 化 React 前端（nginx + 静态文件）
+4. 最终 `docker compose up` 一键启动全部服务
