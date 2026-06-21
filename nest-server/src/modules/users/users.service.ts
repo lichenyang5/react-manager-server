@@ -21,6 +21,38 @@ export class UsersService {
     return this.userModel.findOne({ roleList }).lean().exec();
   }
 
+  async findUserList(query: { state?: string; userId?: string; userName?: string }) {
+    const all = await this.userModel.find({}, { userPwd: 0 }).lean().exec();
+    let list = all as any[];
+
+    if (query.state && query.state !== '0') {
+      list = list.filter((item) => String(item.state) === String(query.state));
+    }
+    if (query.userId) {
+      list = list.filter((item) =>
+        String(item.userId).includes(String(query.userId)),
+      );
+    }
+    if (query.userName) {
+      list = list.filter(
+        (item) => item.userName && item.userName.includes(query.userName),
+      );
+    }
+
+    return {
+      list,
+      page: {
+        pageSize: 1,
+        pageNumber: 10,
+        total: list.length,
+      },
+    };
+  }
+
+  async findAllUsers() {
+    return this.userModel.find({}, { userPwd: 0 }).lean().exec();
+  }
+
   async getPermissionList() {
     const data = await this.userPermissionModel
       .findOne({ _id: PERMISSION_DOC_ID })

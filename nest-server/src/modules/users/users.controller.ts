@@ -25,6 +25,37 @@ export class UsersController {
     return res.send({ code: 0, msg: '', data });
   }
 
+  @Get('list')
+  async list(@Req() req: Request, @Res() res: Response) {
+    const user = verifyTokenFromRequest(req);
+    if (!user) {
+      return res.status(201).send({
+        code: 500001,
+        data: {},
+        msg: 'token 失效或未登录',
+      });
+    }
+
+    const { state, userId, userName } = req.query as Record<string, string>;
+    const data = await this.usersService.findUserList({ state, userId, userName });
+    return res.send({ code: 0, data, msg: 'success' });
+  }
+
+  @Get('all/list')
+  async allList(@Req() req: Request, @Res() res: Response) {
+    const user = verifyTokenFromRequest(req);
+    if (!user) {
+      return res.status(201).send({
+        code: 500001,
+        data: {},
+        msg: 'token 失效或未登录',
+      });
+    }
+
+    const data = await this.usersService.findAllUsers();
+    return res.send({ code: 0, msg: 'success', data });
+  }
+
   @Get('getPermissionList')
   async getPermissionList(@Req() req: Request, @Res() res: Response) {
     const user = verifyTokenFromRequest(req);
