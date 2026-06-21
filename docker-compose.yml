@@ -23,5 +23,16 @@ services:
       - mongo
     restart: unless-stopped
 
+  web:
+    build:
+      context: ../react-manager
+      dockerfile: Dockerfile
+    container_name: react-manager-web
+    ports:
+      - "8080:80"
+    depends_on:
+      - nest-api
+    restart: unless-stopped
+
 volumes:
   mongo-data:

@@ -1,127 +1,98 @@
 # Docker 环境搭建
 
-## 当前目标
+## 项目目录要求
 
-分阶段将车辆管理系统 Docker 化：
-
-1. **Step 1（本文档）**：Docker 化 MongoDB，迁移本地数据
-2. Step 2：Docker 化 NestJS 后端
-3. Step 3：Docker 化 React 前端
-4. Step 4：docker compose 一键启动全部服务
-
-## 为什么先 Docker 化 MongoDB
-
-- MongoDB 是无状态服务中最容易容器化的
-- 本地已有数据可以通过 mongodump/mongorestore 迁移
-- Docker MongoDB 启动后，NestJS 只需改连接串即可使用
-- 不影响已有接口契约
-
-## 启动 Docker MongoDB
-
-```bash
-docker compose up -d mongo
+```
+父目录/
+├── react-manager-server/   ← 后端仓库（docker-compose.yml 在此）
+└── react-manager/          ← 前端仓库
 ```
 
-确认容器运行：
+## 一键启动完整系统
+
+```bash
+docker compose up -d --build
+```
+
+启动三个服务：
+
+| 服务 | 容器名 | 宿主机访问 |
+|------|--------|-----------|
+| mongo | react-manager-mongo | `mongodb://127.0.0.1:27018/MyManager` |
+| nest-api | react-manager-nest-api | `http://localhost:3001` |
+| web | react-manager-web | `http://localhost:8080` |
+
+## 查看容器
 
 ```bash
 docker ps
 ```
 
-应看到 `react-manager-mongo` 容器状态为 `Up`。
+应看到三个容器状态为 `Up`。
 
-## 端口说明
+## 查看日志
 
-docker-compose.yml 默认配置为 **27018:27017**（方案 B），原因：
-
-- 本地 MongoDB 通常占用 27017
-- 使用 27018 映射避免端口冲突
-- 本地原数据库不受影响
-
-### 方案 A：停止本地 MongoDB，Docker 使用 27017
-
-如果你不需要保留本地 MongoDB 运行：
-
-1. 停止本地 MongoDB：
-   ```bash
-   brew services stop mongodb-community
-   # 或
-   sudo systemctl stop mongod
-   ```
-
-2. 修改 docker-compose.yml 端口映射：
-   ```yaml
-   ports:
-     - "27017:27017"
-   ```
-
-3. 启动 Docker MongoDB：
-   ```bash
-   docker compose up -d mongo
-   ```
-
-4. NestJS 连接串不变：
-   ```
-   mongodb://127.0.0.1:27017/MyManager
-   ```
-
-### 方案 B（推荐）：Docker 使用 27018，不影响本地 MongoDB
-
-当前 docker-compose.yml 已配置为此方案，无需修改。
-
-NestJS 连接串需改为：
-```
-mongodb://127.0.0.1:27018/MyManager
+```bash
+docker compose logs -f mongo
+docker compose logs -f nest-api
+docker compose logs -f web
 ```
 
-容器内服务互联时使用：
+## 验证后端
+
+```bash
+curl http://localhost:3001/health
+curl http://localhost:3001/health/db
 ```
-mongodb://mongo:27017/MyManager
+
+## 验证登录
+
+```bash
+curl -X POST "http://localhost:3001/user/login" \
+  -H "Content-Type: application/json" \
+  -d '{"userName":"admin","userPwd":"111111"}'
 ```
 
-## 数据迁移
+## 验证前端
 
-本地 MyManager 数据库不能直接塞进 Docker 镜像，需通过 mongodump/mongorestore 迁移。
+1. 浏览器打开 http://localhost:8080
+2. 登录账号：`admin`，密码：`111111`
+3. 打开浏览器 Network 面板确认：
+   - `/user/login` 请求 `http://localhost:3001`
+   - `/users/getUserInfo` 请求 `http://localhost:3001`
+   - `/users/getPermissionList` 请求 `http://localhost:3001`
 
-**不要把真实 dump 数据提交到 Git。** `.gitignore` 已配置忽略 `docker/mongo/dump/*`。
+## 全量接口验收
 
-### 第一步：导出本地数据
+```bash
+bash scripts/check-nest-api-contract.sh
+```
+
+---
+
+## 数据库说明
+
+如果 Docker MongoDB 里还没有数据，需要先执行数据迁移。
+
+**不要把真实 dump 数据提交到 GitHub。** `.gitignore` 已配置忽略 `docker/mongo/dump/*`。
+
+### 导出本地数据
 
 ```bash
 mongodump --uri="mongodb://127.0.0.1:27017/MyManager" --out="./docker/mongo/dump"
 ```
 
-导出后 `docker/mongo/dump/MyManager/` 目录下会有各集合的 `.bson` 和 `.metadata.json` 文件。
-
-### 第二步：确认 Docker MongoDB 已启动
-
-```bash
-docker ps | grep react-manager-mongo
-```
-
-### 第三步：导入数据到 Docker MongoDB
-
-方案 B（端口 27018）：
+### 导入到 Docker MongoDB
 
 ```bash
 mongorestore --uri="mongodb://127.0.0.1:27018/MyManager" "./docker/mongo/dump/MyManager" --drop
 ```
 
-方案 A（端口 27017）：
-
-```bash
-mongorestore --uri="mongodb://127.0.0.1:27017/MyManager" "./docker/mongo/dump/MyManager" --drop
-```
-
-`--drop` 参数会先清空目标集合再导入，确保数据一致。
-
-### 第四步：验证导入成功
+### 验证导入
 
 ```bash
 mongosh "mongodb://127.0.0.1:27018/MyManager"
 ```
-
-在 mongosh 中执行：
 
 ```javascript
 show collections
@@ -129,11 +100,7 @@ db.userslists.findOne()
 db.orderlists.countDocuments()
 ```
 
-应能看到与本地相同的集合和数据。
-
-## 集合清单
-
-导入后 Docker MongoDB 中应包含以下集合：
+### 集合清单
 
 | 集合名 | 说明 |
 |--------|------|
@@ -153,29 +120,9 @@ db.orderlists.countDocuments()
 | radardatas | 雷达图数据 |
 | citydatas | 城市坐标数据 |
 
-## NestJS Docker 化
+---
 
-### 构建并启动
-
-```bash
-docker compose up -d --build mongo nest-api
-```
-
-### 查看容器状态
-
-```bash
-docker ps
-```
-
-应看到 `react-manager-mongo` 和 `react-manager-nest-api` 两个容器。
-
-### 查看 NestJS 日志
-
-```bash
-docker compose logs -f nest-api
-```
-
-### 连接配置
+## 连接配置
 
 | 场景 | MONGODB_URI |
 |------|-------------|
@@ -183,23 +130,15 @@ docker compose logs -f nest-api
 | 宿主机本地开发连 Docker MongoDB | `mongodb://127.0.0.1:27018/MyManager` |
 | 宿主机连本地原生 MongoDB | `mongodb://127.0.0.1:27017/MyManager` |
 
-### 验证
+## 架构说明
 
-```bash
-# 健康检查
-curl http://localhost:3001/health
-curl http://localhost:3001/health/db
+- 前端使用 nginx:alpine 提供静态文件服务
+- SPA 路由通过 `try_files` 指令支持（刷新不 404）
+- 前端直接请求 `http://localhost:3001`（NestJS 后端），无 nginx 反向代理
+- NestJS 已启用 CORS（`app.enableCors({ origin: true, credentials: true })`）
+- 前端构建时通过 `VITE_BASE_API=http://localhost:3001` 注入 API 地址
 
-# 登录
-curl -X POST "http://localhost:3001/user/login" \
-  -H "Content-Type: application/json" \
-  -d '{"userName":"admin","userPwd":"111111"}'
-
-# 全量接口验收
-bash scripts/check-nest-api-contract.sh
-```
-
-### 本地开发（不用 Docker 运行 NestJS）
+## 本地开发（不用 Docker 运行 NestJS）
 
 如果只想用 Docker MongoDB，NestJS 本地运行：
 
@@ -208,9 +147,51 @@ cd nest-server
 MONGODB_URI=mongodb://127.0.0.1:27018/MyManager npm run start:dev
 ```
 
-## 后续步骤
+---
+
+## 常见问题
+
+### 问题 A：3001 端口被占用
+
+如果本机正在 `npm run start:dev`，需要停止本机 NestJS：
+
+```bash
+# 停止本地 NestJS 进程
+# 或者停止容器
+docker compose stop nest-api
+```
+
+### 问题 B：8080 端口被占用
+
+停止旧 web 容器或修改 compose 端口：
+
+```yaml
+ports:
+  - "8081:80"
+```
+
+### 问题 C：出现 Found orphan containers
+
+这是之前 compose 中遗留的旧服务容器。确认不用后执行：
+
+```bash
+docker compose up -d --remove-orphans
+```
+
+### 问题 D：前端能打开但接口失败
+
+检查：
+
+1. NestJS 是否启动：`docker compose logs nest-api`
+2. 健康检查：`curl http://localhost:3001/health`
+3. 前端环境变量是否指向 `http://localhost:3001`
+4. 浏览器 Console 是否有 CORS 报错
+
+---
+
+## 完成状态
 
 1. ~~Docker 化 MongoDB~~ ✓
 2. ~~Docker 化 NestJS 后端~~ ✓
-3. Docker 化 React 前端（nginx + 静态文件）
-4. 最终 `docker compose up` 一键启动全部服务
+3. ~~Docker 化 React 前端~~ ✓
+4. ~~docker compose 一键启动全部服务~~ ✓
